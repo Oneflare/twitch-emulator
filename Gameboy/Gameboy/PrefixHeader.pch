@@ -1,0 +1,52 @@
+//
+//  PrefixHeader.pch
+//  Gameboy
+//
+//  Created by Pasquale Barilla on 3/4/19.
+//  Copyright © 2019 oneflare. All rights reserved.
+//
+
+#ifndef PrefixHeader_pch
+#define PrefixHeader_pch
+
+typedef unsigned char BYTE;
+typedef char SIGNED_BYTE;
+typedef unsigned short WORD;
+typedef signed short SIGNED_WORD;
+
+union Register {
+    WORD reg;
+    struct {
+        BYTE lo;
+        BYTE hi;
+    };
+};
+
+typedef enum {
+    BankTypeMBC1,
+    BankTypeMBC2,
+    BankTypeUnsupported,
+    BankTypeRomOnly
+} BankType;
+
+/*
+     0 0 0 0 0 0 0 0
+     Z N H C - - - -
+ */
+
+#define FLAG_Z 7
+#define FLAG_N 6
+#define FLAG_H 5
+#define FLAG_C 4
+
+#define TEST_BIT(var, pos) ((var) & (1<<(pos)))
+#define SET_BIT(var, pos) (var |= (1 << pos))
+#define RESET_BIT(var, pos) (var &= (1 << pos))
+
+// Timing
+#define TIMA 0xFF05
+#define TMA 0xFF06
+#define TMC 0xFF07
+#define CLOCKSPEED 4194394;
+
+#endif /* PrefixHeader_pch */
