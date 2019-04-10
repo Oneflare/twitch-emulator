@@ -29,6 +29,21 @@ typedef enum {
     BankTypeRomOnly
 } BankType;
 
+typedef enum {
+    RegA,
+    RegF,
+    RegAF,
+    RegB,
+    RegC,
+    RegBC,
+    RegD,
+    RegE,
+    RegDE,
+    RegH,
+    RegL,
+    RegHL
+} GameboyRegister;
+
 /*
      0 0 0 0 0 0 0 0
      Z N H C - - - -

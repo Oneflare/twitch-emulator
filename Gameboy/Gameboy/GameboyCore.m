@@ -31,6 +31,8 @@
     bool enableRam;
     bool romBanking;
     BankType bankType;
+    
+    BOOL isRunning;
 }
 
 @property (strong, nonatomic) NSData *romData;
@@ -62,7 +64,613 @@
     memset(ramBanks, 0, sizeof(ramBanks));
     currentRamBank = 0;
     
-    [self displayTestWindow];
+    [NSThread detachNewThreadWithBlock:^{
+        [self displayTestWindow];
+    }];
+    
+//    [self.delegate updateRegisterDebugWithString:@"This is coming from the gameboy"];
+    
+    [self beginEmulation];
+    
+}
+
+-(void)beginEmulation {
+    isRunning = true;
+    
+    while(isRunning) {
+        int ticks = SDL_GetTicks();
+        SDL_Event event;
+        
+        while(SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                SDL_Quit();
+                isRunning = false;
+                return;
+            } else if (event.type == SDL_KEYDOWN) {
+                NSLog(@"DOWN");
+                // do something
+            } else if (event.type == SDL_KEYUP) {
+                NSLog(@"UP");
+                // do something
+            }
+        }
+        
+        int x = 1000 / 59.70 - (SDL_GetTicks() - ticks);
+        if (x > 0) {
+            SDL_Delay(x);
+            [self.delegate updateRegisterDebugWithString:[self getDebugRegisterString]];
+            [self updateEmulator];
+        }
+    }
+}
+
+-(void)updateEmulator {
+    const int MAXCYCLES = 20;
+    int currentCycles = 0;
+    
+    while (currentCycles < MAXCYCLES) {
+        int cycles = [self fetchDecodeExecute];
+        currentCycles += cycles;
+        
+        programCounter++;
+        
+        // Update timing
+        // Update graphics
+        // Check and handle interrupts
+    }
+    
+    // update screen
+}
+
+-(int)fetchDecodeExecute {
+    WORD currentInstruction = [self readMemoryFromAddress:programCounter];
+    int cycles = 0;
+    
+    switch (currentInstruction) {
+        case 0x06: {
+            [self loadValue:[self readMemoryFromAddress:programCounter + 1] intoRegister:RegB];
+            
+            cycles = 8;
+            break;
+        }
+        case 0x0E: {
+            [self loadValue:[self readMemoryFromAddress:programCounter + 1] intoRegister:RegC];
+            
+            cycles = 8;
+            break;
+        }
+        case 0x16: {
+            [self loadValue:[self readMemoryFromAddress:programCounter + 1] intoRegister:RegD];
+            
+            cycles = 8;
+            break;
+        }
+        case 0x1E: {
+            [self loadValue:[self readMemoryFromAddress:programCounter + 1] intoRegister:RegE];
+            
+            cycles = 8;
+            break;
+        }
+        case 0x26: {
+            [self loadValue:[self readMemoryFromAddress:programCounter + 1] intoRegister:RegH];
+            
+            cycles = 8;
+            break;
+        }
+        case 0x2E: {
+            [self loadValue:[self readMemoryFromAddress:programCounter + 1] intoRegister:RegL];
+            
+            cycles = 8;
+            break;
+        }
+        case 0x7F: {
+            [self loadValue:registerAF.hi intoRegister:RegA];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x78: {
+            [self loadValue:registerAF.hi intoRegister:RegB];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x79: {
+            [self loadValue:registerAF.hi intoRegister:RegC];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x7A: {
+            [self loadValue:registerAF.hi intoRegister:RegD];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x7B: {
+            [self loadValue:registerAF.hi intoRegister:RegE];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x7E: {
+            [self loadValue:registerAF.hi intoRegister:RegHL];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x40: {
+            [self loadValue:registerBC.hi intoRegister:RegB];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x41: {
+            [self loadValue:registerBC.hi intoRegister:RegC];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x42: {
+            [self loadValue:registerBC.hi intoRegister:RegD];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x43: {
+            [self loadValue:registerBC.hi intoRegister:RegE];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x44: {
+            [self loadValue:registerBC.hi intoRegister:RegH];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x45: {
+            [self loadValue:registerBC.hi intoRegister:RegL];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x46: {
+            [self loadValue:registerBC.hi intoRegister:RegHL];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x48: {
+            [self loadValue:registerBC.lo intoRegister:RegB];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x49: {
+            [self loadValue:registerBC.lo intoRegister:RegC];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x4A: {
+            [self loadValue:registerBC.lo intoRegister:RegD];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x4B: {
+            [self loadValue:registerBC.lo intoRegister:RegE];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x4C: {
+            [self loadValue:registerBC.lo intoRegister:RegH];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x4D: {
+            [self loadValue:registerBC.lo intoRegister:RegL];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x4E: {
+            [self loadValue:registerBC.lo intoRegister:RegHL];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x50: {
+            [self loadValue:registerDE.hi intoRegister:RegB];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x51: {
+            [self loadValue:registerDE.hi intoRegister:RegC];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x52: {
+            [self loadValue:registerDE.hi intoRegister:RegD];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x53: {
+            [self loadValue:registerDE.hi intoRegister:RegE];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x54: {
+            [self loadValue:registerDE.hi intoRegister:RegH];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x55: {
+            [self loadValue:registerDE.hi intoRegister:RegL];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x56: {
+            [self loadValue:registerDE.hi intoRegister:RegHL];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x58: {
+            [self loadValue:registerDE.lo intoRegister:RegB];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x59: {
+            [self loadValue:registerDE.lo intoRegister:RegC];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x5A: {
+            [self loadValue:registerDE.lo intoRegister:RegD];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x5B: {
+            [self loadValue:registerDE.lo intoRegister:RegE];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x5C: {
+            [self loadValue:registerDE.lo intoRegister:RegH];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x5D: {
+            [self loadValue:registerDE.lo intoRegister:RegL];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x5E: {
+            [self loadValue:registerDE.lo intoRegister:RegHL];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x60: {
+            [self loadValue:registerHL.hi intoRegister:RegB];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x61: {
+            [self loadValue:registerHL.hi intoRegister:RegC];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x62: {
+            [self loadValue:registerHL.hi intoRegister:RegD];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x63: {
+            [self loadValue:registerHL.hi intoRegister:RegE];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x64: {
+            [self loadValue:registerHL.hi intoRegister:RegH];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x65: {
+            [self loadValue:registerHL.hi intoRegister:RegL];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x66: {
+            [self loadValue:registerHL.hi intoRegister:RegHL];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x68: {
+            [self loadValue:registerHL.lo intoRegister:RegB];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x69: {
+            [self loadValue:registerHL.lo intoRegister:RegC];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x6A: {
+            [self loadValue:registerHL.lo intoRegister:RegD];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x6B: {
+            [self loadValue:registerHL.lo intoRegister:RegE];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x6C: {
+            [self loadValue:registerHL.lo intoRegister:RegH];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x6D: {
+            [self loadValue:registerHL.lo intoRegister:RegL];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x6E: {
+            [self loadValue:registerHL.lo intoRegister:RegHL];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x70: {
+            [self loadValue:registerHL.reg intoRegister:RegB];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x71: {
+            [self loadValue:registerHL.reg intoRegister:RegC];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x72: {
+            [self loadValue:registerHL.reg intoRegister:RegD];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x73: {
+            [self loadValue:registerHL.reg intoRegister:RegE];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x74: {
+            [self loadValue:registerHL.reg intoRegister:RegH];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x75: {
+            [self loadValue:registerHL.reg intoRegister:RegL];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x36: { // (HL),n
+            [self loadValue:registerHL.reg intoRegister:RegHL];
+            
+            cycles+=12;
+            break;
+        }
+            // LD A,n
+        case 0x7C: {
+            [self loadValue:registerHL.hi intoRegister:RegA];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x7D: {
+            [self loadValue:registerHL.lo intoRegister:RegA];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x0A: {
+            [self loadValue:registerBC.reg intoRegister:RegA];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x1A: {
+            [self loadValue:registerDE.reg intoRegister:RegA];
+            
+            cycles+=8;
+            break;
+        }
+        case 0xFA: {
+            // A, nn
+            [self loadValue:[self readMemoryFromAddress:programCounter+1] intoRegister:RegA];
+            
+            cycles+=16;
+            break;
+        }
+        case 0x3E: {
+            // A, #
+            [self loadValue:0x0 intoRegister:RegA];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x47: {
+            [self loadValue:registerAF.hi intoRegister:RegB];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x4F: {
+            [self loadValue:registerAF.hi intoRegister:RegC];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x57: {
+            [self loadValue:registerAF.hi intoRegister:RegD];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x5F: {
+            [self loadValue:registerAF.hi intoRegister:RegE];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x67: {
+            [self loadValue:registerAF.hi intoRegister:RegH];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x6F: {
+            [self loadValue:registerAF.hi intoRegister:RegL];
+            
+            cycles+=4;
+            break;
+        }
+        case 0x02: {
+            [self loadValue:registerBC.reg intoRegister:RegA];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x12: {
+            [self loadValue:registerDE.reg intoRegister:RegA];
+            
+            cycles+=8;
+            break;
+        }
+        case 0x77: {
+            [self loadValue:registerHL.reg intoRegister:RegA];
+            
+            cycles+=8;
+            break;
+        }
+        case 0xEA: {
+            [self loadValue:[self readMemoryFromAddress:programCounter+1] intoRegister:RegA];
+            
+            cycles+=16;
+            break;
+        }
+        case 0xF2: {
+            [self loadValue:[self readMemoryFromAddress:0xFF00 + registerBC.lo] intoRegister:RegA];
+            cycles+=8;
+            break;
+        }
+        case 0xE2: {
+            [self writeMemoryWithAddress:0xFF00 + registerBC.lo andData:registerAF.hi];
+            cycles+=8;
+            break;
+        }
+        case 0x3A: {
+            [self loadValue:[self readMemoryFromAddress:registerHL.reg] intoRegister:RegA];
+            registerHL.reg--;
+            cycles+=8;
+            break;
+        }
+            
+    }
+    
+    return cycles;
+}
+
+-(void)loadValue:(BYTE)value intoRegister:(GameboyRegister)reg {
+    switch (reg) {
+        case RegA: {
+            registerAF.hi = value;
+            break;
+        }
+        case RegF: {
+            registerAF.lo = value;
+            break;
+        }
+        case RegAF: {
+            registerAF.reg = value;
+            break;
+        }
+        case RegB: {
+            registerBC.hi = value;
+            break;
+        }
+        case RegC: {
+            registerBC.lo = value;
+            break;
+        }
+        case RegBC: {
+            registerBC.reg = value;
+            break;
+        }
+        case RegD: {
+            registerDE.hi = value;
+            break;
+        }
+        case RegE: {
+            registerDE.lo = value;
+            break;
+        }
+        case RegDE: {
+            registerDE.reg = value;
+            break;
+        }
+        case RegH: {
+            registerHL.hi = value;
+            break;
+        }
+        case RegL: {
+            registerHL.lo = value;
+            break;
+        }
+        case RegHL: {
+            registerHL.reg = value;
+            break;
+        }
+    }
+}
+
+
+
+-(NSString *)getDebugRegisterString {
+    return [NSString stringWithFormat:@"A: 0x%X F: 0x%X\nB: 0x%X C: 0x%X\nD: 0x%X E: 0x%X\nH: 0x%X L: 0x%X\nSP: 0x%X\nPC: 0x%X", registerAF.hi, registerAF.lo, registerBC.hi, registerBC.lo, registerDE.hi, registerDE.lo, registerHL.hi, registerHL.lo, stackPointer.reg, programCounter];
 }
 
 -(void)zeroOutRegisters {

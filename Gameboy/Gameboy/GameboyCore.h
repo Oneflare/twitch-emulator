@@ -10,7 +10,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol GameboyDebugDelegate <NSObject>
+-(void)updateRegisterDebugWithString:(NSString *)string;
+@end
+
 @interface GameboyCore : NSObject
+
+@property (nonatomic, weak) id <GameboyDebugDelegate> delegate;
 
 -(void)loadRom:(NSData *)rom;
 

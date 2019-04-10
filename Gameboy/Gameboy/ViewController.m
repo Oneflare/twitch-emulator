@@ -9,7 +9,7 @@
 #import "ViewController.h"
 #import "GameboyCore.h"
 
-@interface ViewController()
+@interface ViewController() <GameboyDebugDelegate>
 
 @property (strong, nonatomic) GameboyCore *gameboyCore;
 
@@ -27,16 +27,25 @@
     [super viewDidAppear];
     
     self.gameboyCore = [GameboyCore new];
+    self.gameboyCore.delegate = self;
     
     NSData *testRom = [NSData dataWithContentsOfFile:[[NSBundle mainBundle]pathForResource:@"cpu_instrs" ofType:@"gb"]];
     
     [self.gameboyCore loadRom:testRom];
+    
+//    [self becomeFirstResponder];
 }
 
 - (void)setRepresentedObject:(id)representedObject {
     [super setRepresentedObject:representedObject];
 
     // Update the view, if already loaded.
+}
+
+#pragma mark - GameboyDebugDelegate
+
+-(void)updateRegisterDebugWithString:(NSString *)string {
+    self.debugOutput.stringValue = string;
 }
 
 
